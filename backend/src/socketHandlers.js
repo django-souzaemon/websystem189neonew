@@ -21,7 +21,11 @@ module.exports = (io, socket, rooms) => {
 
   socket.on('add_npc', ({ roomId, level }) => {
     const game = rooms[roomId];
-    if (!game || game.status !== 'WAITING') return;
+    if (!game) return;
+    if (game.status !== 'WAITING') {
+      broadcastState(io, roomId, game);
+      return;
+    }
 
     if (game.players.length < 4) {
       game.fillWithCPU(1, level);
@@ -35,7 +39,11 @@ module.exports = (io, socket, rooms) => {
 
   socket.on('update_room_settings', ({ roomId, userId, enabledLocalYaku }) => {
     const game = rooms[roomId];
-    if (!game || game.status !== 'WAITING') return;
+    if (!game) return;
+    if (game.status !== 'WAITING') {
+      broadcastState(io, roomId, game);
+      return;
+    }
     game.updateLocalYaku(userId, enabledLocalYaku);
     broadcastState(io, roomId, game);
   });
@@ -70,7 +78,11 @@ module.exports = (io, socket, rooms) => {
 
   socket.on('take_action', ({ roomId, action }) => {
     const game = rooms[roomId];
-    if (!game || game.status !== 'PENDING_ACTION') return;
+    if (!game) return;
+    if (game.status !== 'PENDING_ACTION') {
+      broadcastState(io, roomId, game);
+      return;
+    }
 
     const player = game.players.find(p => p.id === socket.id);
     if (!player) return;
@@ -86,7 +98,11 @@ module.exports = (io, socket, rooms) => {
 
   socket.on('next_round', ({ roomId }) => {
     const game = rooms[roomId];
-    if (!game || game.status !== 'FINISHED') return;
+    if (!game) return;
+    if (game.status !== 'FINISHED') {
+      broadcastState(io, roomId, game);
+      return;
+    }
     game.advanceToNextKyoku();
     startServerTurnTimer(io, rooms, roomId, game);
     broadcastState(io, roomId, game);
