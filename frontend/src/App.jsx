@@ -39,6 +39,7 @@ export default function App() {
   const [autoNextSec, setAutoNextSec] = useState(8);
   const [aiLevel, setAiLevel] = useState(2);
   const [isFastAiMode, setIsFastAiMode] = useState(false);
+  const [connectionError, setConnectionError] = useState(null);
 
   const prevStatusRef = useRef(null);
 
@@ -70,11 +71,24 @@ export default function App() {
       }, 5000);
     });
 
+    socket.on('connect', () => {
+      setConnectionError(null);
+    });
+    socket.on('connect_error', (error) => {
+      setConnectionError(error?.message || 'Socket connection failed');
+    });
+    socket.on('disconnect', () => {
+      setConnectionError('Socket has disconnected.');
+    });
+
     return () => { 
       socket.off('game_state'); 
       socket.off('room_reset_enforced'); 
       socket.off('action_effect');
       socket.off('receive_spectator_comment');
+      socket.off('connect');
+      socket.off('connect_error');
+      socket.off('disconnect');
     };
   }, []);
 
@@ -176,7 +190,7 @@ export default function App() {
     );
   }
 
-  if (!isFastAiMode && (!gameState || gameState.status === 'WAITING')) {
+  if (!gameState || gameState.status === 'WAITING') {
     const currentCount = gameState?.playerCount || 0;
     return (
       <div style={{ textAlign: 'center', marginTop: '120px', color: 'white', fontFamily: 'sans-serif' }}>
@@ -194,6 +208,11 @@ export default function App() {
             </div>
           </div>
           <p style={{ fontSize: '13px', color: '#aaa', margin: '15px 0 0 0' }}>💡 4人集まるか、AIを追加すると自動で開局します。</p>
+          {connectionError && (
+            <div style={{ marginTop: '18px', color: '#ff7979', fontWeight: 'bold' }}>
+              ⚠️ 接続エラー: {connectionError}
+            </div>
+          )}
         </div>
       </div>
     );

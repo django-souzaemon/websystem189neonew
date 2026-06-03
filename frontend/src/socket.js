@@ -1,10 +1,12 @@
 // frontend/src/socket.js
 import { io } from 'socket.io-client';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://websystem189-1.onrender.com';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || window.location.origin;
 
-// 💡 修正：ポーリングの呪いを回避するため、直接WebSocketのトンネルを掘る！
+// Use websocket first, but allow polling fallback for deployed proxy environments.
 export const socket = io(BACKEND_URL, {
-  transports: ['websocket'], // ← これを復活させます！！！
+  transports: ['websocket', 'polling'],
   autoConnect: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
 });
